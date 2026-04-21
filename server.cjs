@@ -22,6 +22,11 @@ app.use(cors({
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Serve o favicon e outros arquivos publicos pela raiz do dominio.
+app.use(express.static('public'));
+
+// Mantem cadastro_cliente.html e os demais arquivos da raiz acessiveis pelo backend.
 app.use(express.static('.'));
 
 // Pool de conexoes para reutilizar acessos ao MySQL e evitar abrir uma conexao por request.
@@ -35,6 +40,7 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+// Evita que textos vindos do banco sejam interpretados como HTML dentro do painel.
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -44,6 +50,7 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+// Padroniza datas no horario de Sao Paulo antes de exibir para o administrador.
 function formatDateTime(value) {
     if (!value) {
         return '--';
@@ -66,6 +73,7 @@ function formatDateTime(value) {
     }).format(date);
 }
 
+// Cria um token temporario em memoria para liberar o acesso ao painel administrativo.
 function createAdminToken() {
     const token = crypto.randomBytes(24).toString('hex');
     const expiresAt = Date.now() + ADMIN_SESSION_TTL_MS;
@@ -73,6 +81,7 @@ function createAdminToken() {
     return { token, expiresAt };
 }
 
+// Aceita o token tanto no header Authorization quanto no x-admin-token.
 function getAdminTokenFromRequest(req) {
     const authHeader = req.headers.authorization || '';
 
@@ -218,6 +227,8 @@ function renderLeadsPanel() {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <!-- Favicon exibido na aba do navegador. -->
+            <link rel="icon" type="image/png" href="/favicon.png">
             <title>Painel de Leads</title>
             <style>
                 :root {
@@ -452,9 +463,11 @@ function renderLeadsPanel() {
             <div id="app"></div>
 
             <script>
+                // Chaves usadas no navegador para guardar a sessao administrativa.
                 const TOKEN_KEY = 'painelLeadsToken';
                 const TOKEN_EXPIRES_KEY = 'painelLeadsTokenExpiresAt';
 
+                // Protege a tabela contra textos com tags HTML vindos do banco.
                 function escapeHtml(value) {
                     return String(value ?? '')
                         .replace(/&/g, '&amp;')
@@ -464,6 +477,7 @@ function renderLeadsPanel() {
                         .replace(/'/g, '&#39;');
                 }
 
+                // Mostra o formulario de login quando nao existe sessao valida.
                 function renderLogin(message = '') {
                     document.getElementById('app').innerHTML = \`
                         <div class="login-shell">
@@ -493,6 +507,7 @@ function renderLeadsPanel() {
                     document.getElementById('loginForm').addEventListener('submit', handleLogin);
                 }
 
+                // Formata a data recebida da API para o padrao brasileiro.
                 function formatDateTime(value) {
                     if (!value) {
                         return '--';
@@ -515,6 +530,7 @@ function renderLeadsPanel() {
                     }).format(date);
                 }
 
+                // Monta os cards, a busca e a tabela com os leads recebidos da API.
                 function renderTable(leads) {
                     const rowsHtml = leads.map((row) => \`
                         <tr>
@@ -589,6 +605,7 @@ function renderLeadsPanel() {
                     }
                 }
 
+                // Envia usuario e senha para o backend e salva o token se o login for aceito.
                 async function handleLogin(event) {
                     event.preventDefault();
 
@@ -616,6 +633,7 @@ function renderLeadsPanel() {
                     await loadLeads();
                 }
 
+                // Valida o token salvo e busca a lista de leads protegida pela API.
                 async function loadLeads() {
                     const token = localStorage.getItem(TOKEN_KEY);
                     const expiresAt = Number(localStorage.getItem(TOKEN_EXPIRES_KEY) || 0);
@@ -645,6 +663,7 @@ function renderLeadsPanel() {
                     renderTable(data.leads || []);
                 }
 
+                // Encerra a sessao no navegador e avisa o backend para invalidar o token.
                 function logout() {
                     const token = localStorage.getItem(TOKEN_KEY);
                     localStorage.removeItem(TOKEN_KEY);
@@ -718,6 +737,7 @@ app.post('/cadastrar', async (req, res) => {
     }
 });
 
+// Valida usuario e senha administrativos e devolve um token temporario ao painel.
 app.post('/admin/login', (req, res) => {
     const { username, password } = req.body || {};
 
@@ -741,6 +761,7 @@ app.post('/admin/login', (req, res) => {
     });
 });
 
+// Remove o token atual para impedir novos acessos com a mesma sessao.
 app.post('/admin/logout', (req, res) => {
     const token = req.body?.token || getAdminTokenFromRequest(req);
 
@@ -779,6 +800,7 @@ app.get('/painel-leads', async (req, res) => {
     }
 });
 
+// Mantem um atalho antigo apontando para a rota oficial do painel.
 app.get('/lista-leads', (req, res) => {
     res.redirect('/painel-leads');
 });
