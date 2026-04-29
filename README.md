@@ -166,6 +166,7 @@ Campos usados:
 
 ```env
 DB_HOST=
+DB_PORT=
 DB_USER=
 DB_PASSWORD=
 DB_NAME=
@@ -473,6 +474,7 @@ Exemplo mínimo:
 PORT=3000
 
 DB_HOST=seu_host_mysql
+DB_PORT=3306
 DB_USER=seu_usuario
 DB_PASSWORD=sua_senha
 DB_NAME=seu_banco

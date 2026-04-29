@@ -1,10 +1,49 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { Scale, Users, FileText, Clock, Shield, Briefcase, ChevronRight, Mail, Phone, MapPin } from 'lucide-react';
 import logoImage from '../imports/image.png';
 
+const initialContactForm = {
+  nome: '',
+  email: '',
+  telefone: '',
+  assunto: '',
+  mensagem: '',
+};
+
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (!digits) {
+    return '';
+  }
+
+  if (digits.length <= 2) {
+    return `(${digits}`;
+  }
+
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+}
+
 export default function App() {
   const [hoveredArea, setHoveredArea] = useState<number | null>(null);
+  const [contactForm, setContactForm] = useState(initialContactForm);
+  const [contactFeedback, setContactFeedback] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({
+    type: 'idle',
+    message: '',
+  });
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : '';
 
   const expertiseAreas = [
     {
@@ -38,6 +77,89 @@ export default function App() {
       description: 'Orientação para empresas e trabalhadores na prevenção de conflitos trabalhistas.',
     },
   ];
+
+  function handleContactChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const { id, value } = event.target;
+    const nextValue = id === 'telefone' ? formatPhone(value) : value;
+
+    setContactForm((current) => ({
+      ...current,
+      [id]: nextValue,
+    }));
+
+    if (contactFeedback.type !== 'idle') {
+      setContactFeedback({ type: 'idle', message: '' });
+    }
+  }
+
+  async function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const payload = {
+      nome: contactForm.nome.trim(),
+      email: contactForm.email.trim(),
+      telefone: formatPhone(contactForm.telefone.trim()),
+      assunto: contactForm.assunto.trim(),
+      descricao: contactForm.mensagem.trim(),
+    };
+
+    const phoneDigits = payload.telefone.replace(/\D/g, '');
+
+    if (!payload.nome || !payload.email || !payload.telefone || !payload.assunto || !payload.descricao) {
+      setContactFeedback({
+        type: 'error',
+        message: 'Preencha nome, email, telefone, assunto e mensagem.',
+      });
+      return;
+    }
+
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setContactFeedback({
+        type: 'error',
+        message: 'Informe um telefone com 10 ou 11 digitos.',
+      });
+      return;
+    }
+
+    setIsSubmittingContact(true);
+    setContactFeedback({ type: 'idle', message: '' });
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/cadastrar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await response.text();
+      let responseData: { sucesso?: boolean; erro?: string; mensagem?: string } | null = null;
+
+      try {
+        responseData = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        responseData = null;
+      }
+
+      if (!response.ok || !responseData?.sucesso) {
+        throw new Error(responseData?.erro || responseData?.mensagem || 'Nao foi possivel enviar a mensagem.');
+      }
+
+      setContactForm(initialContactForm);
+      setContactFeedback({
+        type: 'success',
+        message: 'Mensagem enviada com sucesso. Em breve entraremos em contato.',
+      });
+    } catch (error) {
+      setContactFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Nao foi possivel enviar a mensagem.',
+      });
+    } finally {
+      setIsSubmittingContact(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF8F5]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -378,12 +500,15 @@ export default function App() {
             transition={{ duration: 0.6 }}
             className="bg-white p-10 border border-[#E8DED0] shadow-xl"
           >
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleContactSubmit}>
               <div>
                 <label htmlFor="nome" className="block text-[#2C2416] mb-2">Nome Completo</label>
                 <input
                   type="text"
                   id="nome"
+                  value={contactForm.nome}
+                  onChange={handleContactChange}
+                  required
                   className="w-full px-4 py-3 border-2 border-[#E8DED0] focus:border-[#6B1B1B] outline-none transition-colors bg-[#FAF8F5]"
                   placeholder="Seu nome"
                 />
@@ -394,6 +519,9 @@ export default function App() {
                 <input
                   type="email"
                   id="email"
+                  value={contactForm.email}
+                  onChange={handleContactChange}
+                  required
                   className="w-full px-4 py-3 border-2 border-[#E8DED0] focus:border-[#6B1B1B] outline-none transition-colors bg-[#FAF8F5]"
                   placeholder="seu@email.com"
                 />
@@ -404,6 +532,11 @@ export default function App() {
                 <input
                   type="tel"
                   id="telefone"
+                  value={contactForm.telefone}
+                  onChange={handleContactChange}
+                  required
+                  inputMode="numeric"
+                  maxLength={15}
                   className="w-full px-4 py-3 border-2 border-[#E8DED0] focus:border-[#6B1B1B] outline-none transition-colors bg-[#FAF8F5]"
                   placeholder="(11) 98765-4321"
                 />
@@ -413,14 +546,17 @@ export default function App() {
                 <label htmlFor="assunto" className="block text-[#2C2416] mb-2">Assunto</label>
                 <select
                   id="assunto"
+                  value={contactForm.assunto}
+                  onChange={handleContactChange}
+                  required
                   className="w-full px-4 py-3 border-2 border-[#E8DED0] focus:border-[#6B1B1B] outline-none transition-colors bg-[#FAF8F5]"
                 >
-                  <option>Selecione o tipo de caso</option>
+                  <option value="">Selecione o tipo de caso</option>
                   <option>Rescisão Contratual</option>
-                  <option>Horas Extras</option>
-                  <option>Acidente de Trabalho</option>
+                  <option value="Horas Extras">Horas Extras</option>
+                  <option value="Acidente de Trabalho">Acidente de Trabalho</option>
                   <option>Assédio</option>
-                  <option>Outros</option>
+                  <option value="Outros">Outros</option>
                 </select>
               </div>
 
@@ -429,6 +565,9 @@ export default function App() {
                 <textarea
                   id="mensagem"
                   rows={5}
+                  value={contactForm.mensagem}
+                  onChange={handleContactChange}
+                  required
                   className="w-full px-4 py-3 border-2 border-[#E8DED0] focus:border-[#6B1B1B] outline-none transition-colors bg-[#FAF8F5] resize-none"
                   placeholder="Descreva brevemente sua situação..."
                 ></textarea>
@@ -436,11 +575,23 @@ export default function App() {
 
               <button
                 type="submit"
-                className="w-full bg-[#6B1B1B] text-white px-8 py-4 hover:bg-[#541515] transition-all duration-300 flex items-center justify-center gap-2 group text-lg"
+                disabled={isSubmittingContact}
+                className="w-full bg-[#6B1B1B] text-white px-8 py-4 hover:bg-[#541515] disabled:bg-[#8E5E5E] disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 group text-lg"
               >
-                Enviar Mensagem
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {isSubmittingContact ? 'Enviando...' : 'Enviar Mensagem'}
+                <ChevronRight className={`w-5 h-5 transition-transform ${isSubmittingContact ? 'opacity-40' : 'group-hover:translate-x-1'}`} />
               </button>
+              <p
+                className={`min-h-6 text-sm ${
+                  contactFeedback.type === 'success'
+                    ? 'text-[#2E7D32]'
+                    : contactFeedback.type === 'error'
+                      ? 'text-[#B3261E]'
+                      : 'text-transparent'
+                }`}
+              >
+                {contactFeedback.message || ' '}
+              </p>
             </form>
           </motion.div>
         </div>

@@ -8,6 +8,7 @@ const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DB_PORT = Number(process.env.DB_PORT || 3306);
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const ADMIN_SESSION_HOURS = Number(process.env.ADMIN_SESSION_HOURS || 3);
@@ -32,6 +33,7 @@ app.use(express.static('.'));
 // Pool de conexoes para reutilizar acessos ao MySQL e evitar abrir uma conexao por request.
 const pool = mysql.createPool({
     host: process.env.DB_HOST || '',
+    port: DB_PORT,
     user: process.env.DB_USER || '',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || '',
@@ -132,7 +134,9 @@ async function ensureLeadsSchema() {
             CREATE TABLE IF NOT EXISTS leads (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nome VARCHAR(255),
+                tx_email VARCHAR(255),
                 telefone VARCHAR(20),
+                tx_assunto VARCHAR(255),
                 descricao LONGTEXT,
                 dt_cadastro DATETIME NULL
             )
@@ -143,10 +147,25 @@ async function ensureLeadsSchema() {
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_SCHEMA = ?
               AND TABLE_NAME = 'leads'
-              AND COLUMN_NAME IN ('created_at', 'dt_cadastro')
         `, [process.env.DB_NAME || '']);
 
         const columnNames = new Set(columns.map((column) => column.COLUMN_NAME));
+
+        if (!columnNames.has('tx_email')) {
+            await connection.query(`
+                ALTER TABLE leads
+                ADD COLUMN tx_email VARCHAR(255) NULL
+            `);
+            console.log("Coluna 'tx_email' adicionada na tabela 'leads'.");
+        }
+
+        if (!columnNames.has('tx_assunto')) {
+            await connection.query(`
+                ALTER TABLE leads
+                ADD COLUMN tx_assunto VARCHAR(255) NULL
+            `);
+            console.log("Coluna 'tx_assunto' adicionada na tabela 'leads'.");
+        }
 
         if (!columnNames.has('dt_cadastro')) {
             await connection.query(`
@@ -209,7 +228,7 @@ async function fetchLeads() {
             : 'NULL AS dt_cadastro';
 
         const [rows] = await connection.query(`
-            SELECT id, nome, telefone, descricao, ${selectDateColumn}
+            SELECT id, nome, tx_email, telefone, tx_assunto, descricao, ${selectDateColumn}
             FROM leads
             ORDER BY id DESC
         `);
@@ -330,7 +349,7 @@ function renderLeadsPanel() {
                 table {
                     width: 100%;
                     border-collapse: collapse;
-                    min-width: 820px;
+                    min-width: 1180px;
                 }
                 th, td {
                     padding: 16px;
@@ -353,14 +372,22 @@ function renderLeadsPanel() {
                     font-weight: 700;
                 }
                 .col-nome,
-                .col-telefone {
+                .col-email,
+                .col-telefone,
+                .col-assunto {
                     white-space: nowrap;
                 }
                 .col-nome {
                     min-width: 170px;
                 }
+                .col-email {
+                    min-width: 220px;
+                }
                 .col-telefone {
                     min-width: 140px;
+                }
+                .col-assunto {
+                    min-width: 180px;
                 }
                 .descricao {
                     min-width: 280px;
@@ -536,7 +563,9 @@ function renderLeadsPanel() {
                         <tr>
                             <td>\${escapeHtml(row.id)}</td>
                             <td class="col-nome">\${escapeHtml(row.nome)}</td>
+                            <td class="col-email">\${escapeHtml(row.tx_email)}</td>
                             <td class="col-telefone">\${escapeHtml(row.telefone)}</td>
+                            <td class="col-assunto">\${escapeHtml(row.tx_assunto)}</td>
                             <td class="descricao">\${escapeHtml(row.descricao)}</td>
                             <td>\${escapeHtml(formatDateTime(row.dt_cadastro))}</td>
                         </tr>
@@ -560,7 +589,7 @@ function renderLeadsPanel() {
                             </section>
 
                             <div class="toolbar">
-                                <input id="searchInput" class="search" type="search" placeholder="Buscar por nome, telefone ou descricao">
+                                <input id="searchInput" class="search" type="search" placeholder="Buscar por nome, e-mail, telefone, assunto ou descricao">
                                 <button id="logoutButton" class="button button-secondary" type="button">Sair</button>
                             </div>
 
@@ -571,7 +600,9 @@ function renderLeadsPanel() {
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Nome</th>
+                                                <th>E-mail</th>
                                                 <th>Telefone</th>
+                                                <th>Assunto</th>
                                                 <th>Descricao</th>
                                                 <th>Criado em</th>
                                             </tr>
@@ -688,12 +719,14 @@ function renderLeadsPanel() {
 // Prepara a estrutura minima do banco antes de abrir a API para evitar consultas antes da migracao.
 async function startServer() {
     try {
-        console.log('\nConexao com banco de dados estabelecida!');
+        console.log('\nTentando conectar ao banco de dados...');
         console.log(`   Host: ${process.env.DB_HOST || '(nao configurado)'}`);
+        console.log(`   Porta: ${DB_PORT}`);
         console.log(`   Banco: ${process.env.DB_NAME || '(nao configurado)'}`);
         await ensureLeadsSchema();
+        console.log('Conexao com banco de dados estabelecida!');
         console.log("Tabela 'leads' pronta para uso!");
-        console.log('   Colunas esperadas: id, nome, telefone, descricao, dt_cadastro\n');
+        console.log('   Colunas esperadas: id, nome, tx_email, telefone, tx_assunto, descricao, dt_cadastro\n');
 
         app.listen(PORT, () => {
             console.log('\n========================================');
@@ -705,7 +738,19 @@ async function startServer() {
             console.log('========================================\n');
         });
     } catch (err) {
-        console.error('Erro ao conectar/criar tabela:', err.message);
+        console.error('Erro ao conectar/criar tabela:', err?.code || err?.message || err);
+        if (err?.sqlMessage) {
+            console.error('Detalhe SQL:', err.sqlMessage);
+        }
+        if (err?.code === 'ETIMEDOUT') {
+            console.error('O host do MySQL nao respondeu. Confirme o host remoto do cPanel, a porta e se o seu IP foi liberado em Remote MySQL.');
+        }
+        if (err?.code === 'ECONNREFUSED') {
+            console.error('A conexao foi recusada. Verifique se a porta do MySQL esta correta e se o servidor aceita conexoes remotas.');
+        }
+        if (err?.code === 'ER_ACCESS_DENIED_ERROR') {
+            console.error('Usuario ou senha do MySQL invalidos para esse host.');
+        }
         console.error('Verifique suas credenciais de banco de dados!');
     }
 }
@@ -713,15 +758,15 @@ async function startServer() {
 // Recebe o lead do formulario e salva no banco.
 app.post('/cadastrar', async (req, res) => {
     try {
-        const { nome, telefone, descricao } = req.body;
+        const { nome, email, telefone, assunto, descricao } = req.body;
 
-        if (!nome || !telefone || !descricao) {
+        if (!nome || !email || !telefone || !assunto || !descricao) {
             return res.status(400).json({ erro: 'Dados incompletos.' });
         }
 
-        const sql = 'INSERT INTO leads (nome, telefone, descricao, dt_cadastro) VALUES (?, ?, ?, NOW())';
+        const sql = 'INSERT INTO leads (nome, tx_email, telefone, tx_assunto, descricao, dt_cadastro) VALUES (?, ?, ?, ?, ?, NOW())';
         const connection = await pool.getConnection();
-        const [result] = await connection.query(sql, [nome, telefone, descricao]);
+        const [result] = await connection.query(sql, [nome, email, telefone, assunto, descricao]);
         connection.release();
 
         res.status(200).json({
