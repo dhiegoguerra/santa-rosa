@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Em Constru&ccedil;&atilde;o - Santa Rosa Advocacia</title>
+    <link rel="icon" type="image/png" href="./public/favicon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #faf8f5;
+            --bg-strong: #f2ece3;
+            --surface: rgba(255, 255, 255, 0.84);
+            --surface-strong: #fffdf9;
+            --line: rgba(107, 27, 27, 0.14);
+            --text: #1a1410;
+            --muted: #594a3a;
+            --brand: #6b1b1b;
+            --brand-dark: #541515;
+            --brand-soft: rgba(107, 27, 27, 0.09);
+            --shadow: 0 24px 80px rgba(44, 36, 22, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(198, 93, 59, 0.16), transparent 26%),
+                radial-gradient(circle at bottom right, rgba(107, 27, 27, 0.12), transparent 24%),
+                linear-gradient(180deg, #fdfaf6 0%, var(--bg) 42%, var(--bg-strong) 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            opacity: 0.035;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C65D3B' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(4px);
+            opacity: 0.55;
+            z-index: 0;
+            animation: floatOrb 16s ease-in-out infinite;
+        }
+
+        .ambient-orb-1 {
+            top: 12vh;
+            right: -70px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(107, 27, 27, 0.18) 0%, rgba(107, 27, 27, 0) 72%);
+        }
+
+        .ambient-orb-2 {
+            left: -90px;
+            bottom: 12vh;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(198, 93, 59, 0.18) 0%, rgba(198, 93, 59, 0) 72%);
+            animation-delay: -6s;
+        }
+
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(14px);
+            background: rgba(250, 248, 245, 0.88);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .header-inner,
+        .hero,
+        .footer-inner {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px 0;
+        }
+
+        .brand img {
+            height: clamp(82px, 10vw, 132px);
+            width: auto;
+            display: block;
+        }
+
+        .header-links {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            color: var(--muted);
+            font-size: 0.96rem;
+        }
+
+        .header-links a:hover {
+            color: var(--brand);
+        }
+
+        .header-cta {
+            padding: 12px 20px;
+            border-radius: 999px;
+            background: var(--brand);
+            color: #fff;
+            font-weight: 700;
+            transition: background 0.25s ease, transform 0.25s ease;
+        }
+
+        .header-cta:hover {
+            background: var(--brand-dark);
+            transform: translateY(-1px);
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            padding: 42px 0 28px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+            gap: 34px;
+            align-items: stretch;
+        }
+
+        .hero-copy,
+        .hero-panel {
+            position: relative;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .hero-copy {
+            border-radius: 34px;
+            padding: clamp(28px, 5vw, 54px);
+            overflow: hidden;
+        }
+
+        .hero-copy::after {
+            content: "";
+            position: absolute;
+            right: -60px;
+            bottom: -90px;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(107, 27, 27, 0.15) 0%, rgba(107, 27, 27, 0) 68%);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(107, 27, 27, 0.16);
+            background: var(--brand-soft);
+            color: var(--brand);
+            font-size: 0.84rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .badge::before,
+        .live-chip-label::before,
+        .monitor-label::before {
+            content: "";
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #c65d3b;
+            box-shadow: 0 0 0 0 rgba(198, 93, 59, 0.35);
+            animation: pulseDot 1.8s ease-out infinite;
+        }
+
+        h1 {
+            margin-top: 24px;
+            font-family: 'Crimson Pro', Georgia, serif;
+            font-size: clamp(2.7rem, 6vw, 5.3rem);
+            line-height: 0.98;
+            letter-spacing: -0.03em;
+            max-width: 11ch;
+        }
+
+        .lead {
+            margin-top: 24px;
+            max-width: 58ch;
+            font-size: 1.12rem;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+
+        .live-strip {
+            margin-top: 28px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .live-chip {
+            border-radius: 22px;
+            border: 1px solid rgba(107, 27, 27, 0.12);
+            background: rgba(255, 255, 255, 0.72);
+            padding: 16px 18px;
+        }
+
+        .live-chip-label,
+        .monitor-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--brand);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .live-chip strong {
+            display: block;
+            margin-top: 10px;
+            font-size: 1.06rem;
+            line-height: 1.45;
+            color: var(--text);
+        }
+
+        .live-chip p {
+            margin-top: 6px;
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 0.96rem;
+        }
+
+        .oab {
+            margin-top: 28px;
+            display: inline-flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 14px 18px;
+            background: rgba(107, 27, 27, 0.06);
+            border-left: 3px solid var(--brand);
+            color: var(--brand);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .actions {
+            margin-top: 34px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 54px;
+            padding: 0 24px;
+            border-radius: 999px;
+            font-weight: 700;
+            transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button-primary {
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .button-primary:hover {
+            background: var(--brand-dark);
+        }
+
+        .button-secondary {
+            border: 1px solid rgba(107, 27, 27, 0.18);
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--brand);
+        }
+
+        .hero-panel {
+            border-radius: 30px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .panel-card {
+            padding: 24px;
+            border-radius: 24px;
+            background: var(--surface-strong);
+            border: 1px solid rgba(107, 27, 27, 0.08);
+        }
+
+        .panel-card h2 {
+            font-family: 'Crimson Pro', Georgia, serif;
+            font-size: 1.9rem;
+            margin-bottom: 10px;
+        }
+
+        .panel-card p,
+        .footer-inner p {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .monitor-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .monitor-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .monitor-step {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .monitor-copy {
+            min-height: 112px;
+        }
+
+        .monitor-copy strong {
+            display: block;
+            font-family: 'Crimson Pro', Georgia, serif;
+            font-size: 1.85rem;
+            line-height: 1.05;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .progress-shell {
+            margin-top: 18px;
+        }
+
+        .progress-legend {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+
+        .progress-track {
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(107, 27, 27, 0.08);
+        }
+
+        .progress-fill {
+            width: 42%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #6b1b1b 0%, #c65d3b 100%);
+            box-shadow: 0 8px 18px rgba(107, 27, 27, 0.24);
+            transition: width 0.6s ease;
+        }
+
+        .status-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: rgba(107, 27, 27, 0.05);
+            border: 1px solid rgba(107, 27, 27, 0.08);
+        }
+
+        .status-index {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: #fff;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .status-copy strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(26px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        footer {
+            padding: 28px 0 46px;
+        }
+
+        .footer-inner {
+            padding: 20px 0 0;
+            border-top: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .footer-inner p {
+            font-size: 0.95rem;
+        }
+
+        @keyframes pulseDot {
+            0% {
+                box-shadow: 0 0 0 0 rgba(198, 93, 59, 0.35);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(198, 93, 59, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(198, 93, 59, 0);
+            }
+        }
+
+        @keyframes floatOrb {
+            0%,
+            100% {
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate3d(0, -22px, 0) scale(1.04);
+            }
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .live-strip {
+                grid-template-columns: 1fr;
+            }
+
+            .header-inner {
+                flex-wrap: wrap;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .header-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            h1 {
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            main {
+                padding-top: 24px;
+            }
+
+            .hero-copy,
+            .hero-panel {
+                border-radius: 24px;
+            }
+
+            .hero-copy,
+            .hero-panel {
+                padding: 22px;
+            }
+
+            .panel-card {
+                padding: 20px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .ambient-orb,
+            .badge::before,
+            .live-chip-label::before,
+            .monitor-label::before,
+            .reveal,
+            .progress-fill,
+            .button,
+            .header-cta {
+                animation: none !important;
+                transition: none !important;
+            }
+
+            .reveal {
+                opacity: 1;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-orb ambient-orb-1" aria-hidden="true"></div>
+    <div class="ambient-orb ambient-orb-2" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="./index.html" aria-label="Santa Rosa Advocacia">
+                <img src="./src/imports/image.png" alt="Logo Santa Rosa Advocacia">
+            </a>
+
+            <nav class="header-links" aria-label="Navega&ccedil;&atilde;o principal">
+                <a href="#status">Atualiza&ccedil;&atilde;o</a>
+                <a class="header-cta" href="https://wa.me/5511965716639?text=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20um%20contato." target="_blank" rel="noopener noreferrer">Solicitar contato</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-copy reveal">
+                <span class="badge">Site em constru&ccedil;&atilde;o</span>
+                <h1>Estamos preparando uma nova experi&ecirc;ncia digital.</h1>
+                <p class="lead">
+                    Nosso site est&aacute; passando por ajustes e melhorias para apresentar o escrit&oacute;rio com mais clareza,
+                    presen&ccedil;a e praticidade. Enquanto isso, o atendimento segue normalmente.
+                </p>
+
+                <div class="live-strip">
+                    <div class="live-chip">
+                        <span class="live-chip-label">Canal ativo</span>
+                        <strong id="liveHeadline">Atendimento imediato pelo WhatsApp.</strong>
+                        <p id="liveDescription">Nossa equipe continua recebendo novas solicita&ccedil;&otilde;es mesmo durante a atualiza&ccedil;&atilde;o do site.</p>
+                    </div>
+                </div>
+
+                <div class="oab">
+                    <span>OAB/PA 24.589</span>
+                    <span>OAB/SP 431.715</span>
+                </div>
+
+                <div class="actions">
+                    <a class="button button-primary" href="https://wa.me/5511965716639?text=Ol%C3%A1%2C%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" rel="noopener noreferrer">Agendar uma consulta</a>
+                    <a class="button button-secondary" href="./index.html">Voltar ao site principal</a>
+                </div>
+            </div>
+
+            <aside class="hero-panel reveal" id="status">
+                <div class="panel-card monitor-card">
+                    <div class="monitor-meta">
+                        <span class="monitor-label">Painel ao vivo</span>
+                        <span class="monitor-step" id="monitorStep">Etapa 1 de 4</span>
+                    </div>
+
+                    <div class="monitor-copy">
+                        <strong id="monitorTitle">Ajustes visuais em andamento</strong>
+                        <p id="monitorText">
+                            Estamos refinando tipografia, contraste e organiza&ccedil;&atilde;o para deixar a experi&ecirc;ncia mais clara e elegante.
+                        </p>
+                    </div>
+
+                    <div class="progress-shell">
+                        <div class="progress-legend">
+                            <span id="progressLabel">Ajustes visuais</span>
+                            <span id="progressValue">42%</span>
+                        </div>
+                        <div class="progress-track" aria-hidden="true">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <h2>Atualiza&ccedil;&atilde;o em andamento</h2>
+                    <p>
+                        Estamos revisando conte&uacute;do, organizando a navega&ccedil;&atilde;o e preparando uma apresenta&ccedil;&atilde;o mais completa
+                        dos nossos servi&ccedil;os.
+                    </p>
+                </div>
+
+                <div class="status-list">
+                    <div class="status-item">
+                        <div class="status-index">01</div>
+                        <div class="status-copy">
+                            <strong>Estrutura renovada</strong>
+                            <span>Nova organiza&ccedil;&atilde;o das p&aacute;ginas para facilitar o acesso &agrave;s informa&ccedil;&otilde;es essenciais.</span>
+                        </div>
+                    </div>
+
+                    <div class="status-item">
+                        <div class="status-index">02</div>
+                        <div class="status-copy">
+                            <strong>Conte&uacute;do em revis&atilde;o</strong>
+                            <span>Textos e &aacute;reas de atua&ccedil;&atilde;o est&atilde;o sendo refinados para refletir melhor o escrit&oacute;rio.</span>
+                        </div>
+                    </div>
+
+                    <div class="status-item">
+                        <div class="status-index">03</div>
+                        <div class="status-copy">
+                            <strong>Atendimento ativo</strong>
+                            <span>Se precisar de orienta&ccedil;&atilde;o, voc&ecirc; j&aacute; pode iniciar a conversa pelo WhatsApp.</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <p>Santa Rosa Advocacia Trabalhista</p>
+            <p>Atualizamos esta p&aacute;gina em breve com a vers&atilde;o completa do site.</p>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            const updates = [
+                {
+                    step: 'Etapa 1 de 4',
+                    title: 'Ajustes visuais em andamento',
+                    text: 'Estamos refinando tipografia, contraste e organizacao para deixar a experiencia mais clara e elegante.',
+                    label: 'Ajustes visuais',
+                    progress: 42,
+                    headline: 'Atendimento imediato pelo WhatsApp.',
+                    description: 'Nossa equipe continua recebendo novas solicitacoes mesmo durante a atualizacao do site.'
+                },
+                {
+                    step: 'Etapa 2 de 4',
+                    title: 'Conteudo institucional em revisao',
+                    text: 'As paginas estao sendo reorganizadas para apresentar melhor as areas de atuacao e a proposta do escritorio.',
+                    label: 'Conteudo e estrutura',
+                    progress: 58,
+                    headline: 'Consulta inicial continua disponivel.',
+                    description: 'Voce pode iniciar a conversa agora e encaminhar seu caso diretamente pelo canal principal.'
+                },
+                {
+                    step: 'Etapa 3 de 4',
+                    title: 'Canais de contato priorizados',
+                    text: 'Enquanto o novo site e finalizado, concentramos o atendimento no WhatsApp para responder com mais rapidez.',
+                    label: 'Canais de atendimento',
+                    progress: 76,
+                    headline: 'Resposta mais rapida pelo celular.',
+                    description: 'Os botoes desta pagina ja levam direto para a conversa com a equipe do escritorio.'
+                },
+                {
+                    step: 'Etapa 4 de 4',
+                    title: 'Publicacao da versao completa',
+                    text: 'Os ultimos ajustes estao focados na entrega de uma apresentacao mais completa, organizada e profissional.',
+                    label: 'Preparacao da publicacao',
+                    progress: 91,
+                    headline: 'Nova versao sendo finalizada.',
+                    description: 'Ate a publicacao definitiva, esta pagina segue centralizando o contato direto com o escritorio.'
+                }
+            ];
+
+            const liveHeadlineEl = document.getElementById('liveHeadline');
+            const liveDescriptionEl = document.getElementById('liveDescription');
+            const monitorStepEl = document.getElementById('monitorStep');
+            const monitorTitleEl = document.getElementById('monitorTitle');
+            const monitorTextEl = document.getElementById('monitorText');
+            const progressLabelEl = document.getElementById('progressLabel');
+            const progressValueEl = document.getElementById('progressValue');
+            const progressFillEl = document.getElementById('progressFill');
+            const revealEls = document.querySelectorAll('.reveal');
+
+            function applyUpdate(index) {
+                const item = updates[index];
+                monitorStepEl.textContent = item.step;
+                monitorTitleEl.textContent = item.title;
+                monitorTextEl.textContent = item.text;
+                progressLabelEl.textContent = item.label;
+                progressValueEl.textContent = item.progress + '%';
+                progressFillEl.style.width = item.progress + '%';
+                liveHeadlineEl.textContent = item.headline;
+                liveDescriptionEl.textContent = item.description;
+            }
+
+            function revealOnView() {
+                if (!('IntersectionObserver' in window)) {
+                    revealEls.forEach((element) => element.classList.add('is-visible'));
+                    return;
+                }
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.16
+                });
+
+                revealEls.forEach((element) => observer.observe(element));
+            }
+
+            let currentIndex = 0;
+            applyUpdate(currentIndex);
+            revealOnView();
+
+            window.setInterval(() => {
+                currentIndex = (currentIndex + 1) % updates.length;
+                applyUpdate(currentIndex);
+            }, 4200);
+        }());
+    </script>
+</body>
+</html>

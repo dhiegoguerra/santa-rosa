@@ -164,7 +164,7 @@ export default function App() {
   }
 
   return (
-    <div id="inicio" className="min-h-screen bg-[#FAF8F5]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#FAF8F5]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {/* Header/Navigation */}
       <motion.header
         initial={{ y: -100 }}
@@ -173,9 +173,9 @@ export default function App() {
         className="fixed top-0 w-full bg-[#FAF8F5]/95 backdrop-blur-sm z-50 border-b border-[#6B1B1B]/10"
       >
         <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-          <a href="#inicio" aria-label="Voltar ao início" className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <img src={logoImage} alt="Santa Rosa Logo" className="h-28 md:h-32 lg:h-36 w-auto" />
-          </a>
+          </div>
           <nav className="hidden md:flex gap-8">
             <a href="#sobre" className="text-[#2C2416] hover:text-[#6B1B1B] transition-colors">Sobre</a>
             <a href="#atuacao" className="text-[#2C2416] hover:text-[#6B1B1B] transition-colors">Áreas de Atuação</a>
@@ -293,30 +293,27 @@ export default function App() {
             >
               <p>
                 Advogada inscrita na Ordem dos Advogados do Brasil, graduada em Direito no ano de 2016, com sólida trajetória profissional voltada integralmente à atuação no Direito do Trabalho, desenvolvendo experiência técnica e estratégica tanto no contencioso quanto na consultoria trabalhista.
+
               </p>
               <p>
                 Iniciou sua carreira jurídica na cidade de Belém, onde consolidou atuação prática em demandas trabalhistas de média e alta complexidade, adquirindo ampla vivência processual perante Varas do Trabalho e Tribunais Regionais. Em 2019, transferiu-se para a cidade de São Paulo, ampliando significativamente sua atuação profissional e passando a conduzir processos e estratégias jurídicas em âmbito nacional.
+.
               </p>
               <p>
                 Possui experiência na elaboração de peças processuais estratégicas, recursos, manifestações em fase de conhecimento e execução, análise de cálculos trabalhistas, liquidação de sentença, audiências, sustentações e acompanhamento processual em diferentes regiões do país. Atua com perfil técnico, analítico e resolutivo, destacando-se pela capacidade de condução de demandas complexas com elevado nível de organização, responsabilidade e comprometimento com resultados.
+                Entre suas principais competências profissionais, destacam-se:
+	              •	Atuação especializada em Direito e Processo do Trabalho;
+	              •	Gestão estratégica de processos trabalhistas em âmbito nacional;
+	              •	Elaboração de peças processuais de alta complexidade;
+                •	Atuação em fase recursal e execução trabalhista;
+	              •	Análise e impugnação de cálculos judiciais;
+              	•	Capacidade de negociação e composição de conflitos;
+	              •	Organização processual e gestão de prazos;
+              	•	Comunicação jurídica clara, técnica e objetiva;
+              	•	Perfil analítico, estratégico e orientado à solução de demandas;
+              	•	Facilidade de adaptação a diferentes realidades regionais e perfis de clientes.
+
               </p>
-              <div className="space-y-4">
-                <p>
-                  Entre suas principais competências profissionais, destacam-se:
-                </p>
-                <ul className="list-disc space-y-2 pl-6 marker:text-[#C65D3B]">
-                  <li>Atuação especializada em Direito e Processo do Trabalho.</li>
-                  <li>Gestão estratégica de processos trabalhistas em âmbito nacional.</li>
-                  <li>Elaboração de peças processuais de alta complexidade.</li>
-                  <li>Atuação em fase recursal e execução trabalhista.</li>
-                  <li>Análise e impugnação de cálculos judiciais.</li>
-                  <li>Capacidade de negociação e composição de conflitos.</li>
-                  <li>Organização processual e gestão de prazos.</li>
-                  <li>Comunicação jurídica clara, técnica e objetiva.</li>
-                  <li>Perfil analítico, estratégico e orientado à solução de demandas.</li>
-                  <li>Facilidade de adaptação a diferentes realidades regionais e perfis de clientes.</li>
-                </ul>
-              </div>
             </motion.div>
 
             <motion.div
@@ -693,9 +690,9 @@ export default function App() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-3 gap-12 mb-10">
             <div>
-              <a href="#inicio" aria-label="Voltar ao início" className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4">
                 <img src={logoImage} alt="Santa Rosa Logo" className="h-16 md:h-20 w-auto" />
-              </a>
+              </div>
               <p className="text-sm leading-relaxed">
                 Escritório de advocacia comprometido com a defesa dos seus direitos e a busca por justiça em cada causa.
               </p>

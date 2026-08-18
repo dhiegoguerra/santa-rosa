@@ -39,10 +39,21 @@
         }
 
         .logo {
-            font-family: 'Crimson Pro', serif;
-            font-size: 24px;
-            font-weight: 700;
-            color: #6B1B1B;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo img {
+            display: block;
+            height: 88px;
+            width: auto;
+        }
+
+        .logo:focus-visible {
+            outline: 2px solid #6B1B1B;
+            outline-offset: 4px;
+            border-radius: 8px;
         }
 
         .nav-links {
@@ -215,6 +226,10 @@
                 font-size: 0.9rem;
             }
 
+            .logo img {
+                height: 72px;
+            }
+
             .form-container {
                 padding: 2rem 1.5rem;
             }
@@ -229,9 +244,11 @@
     <!-- Header -->
     <header>
         <div class="header-container">
-            <div class="logo">SANTA ROSA</div>
+            <a class="logo" href="/#inicio" aria-label="Voltar ao inicio do site">
+                <img src="/favicon.png" alt="Santa Rosa Advocacia">
+            </a>
             <nav class="nav-links">
-                <a href="/" style="font-size: 0.9rem;">← Voltar</a>
+                <a href="/#inicio" style="font-size: 0.9rem;">← Voltar</a>
             </nav>
         </div>
     </header>
@@ -268,16 +285,6 @@
                         <span class="error" id="erroTelefone"></span>
                     </div>
 
-                    <!-- Descrição -->
-                    <div class="form-group">
-                        <label for="descricao">Descreva seu Problema *</label>
-                        <textarea id="descricao" name="descricao" placeholder="Ex: Trabalho há 3 anos na empresa e fui demitido sem aviso prévio..." required></textarea>
-                        <div class="form-examples">
-                            <strong>Exemplos:</strong> Demissão sem justa causa • Horas extras não pagas • Assédio moral • Falta de equipamento de proteção
-                        </div>
-                        <span class="error" id="erroDescricao"></span>
-                    </div>
-
                     <!-- Assunto -->
                     <div class="form-group">
                         <label for="assunto">Assunto *</label>
@@ -290,6 +297,16 @@
                             <option value="Outros">Outros</option>
                         </select>
                         <span class="error" id="erroAssunto"></span>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="form-group">
+                        <label for="descricao">Descreva seu Problema *</label>
+                        <textarea id="descricao" name="descricao" placeholder="Ex: Trabalho há 3 anos na empresa e fui demitido sem aviso prévio..." required></textarea>
+                        <div class="form-examples">
+                            <strong>Exemplos:</strong> Demissão sem justa causa • Horas extras não pagas • Assédio moral • Falta de equipamento de proteção
+                        </div>
+                        <span class="error" id="erroDescricao"></span>
                     </div>
 
                     <button type="submit" class="btn-submit" id="btnSubmit">Enviar Consulta</button>
@@ -311,7 +328,7 @@
                         <p id="telefoneRecebido" style="margin: 0.25rem 0; font-size: 0.9rem;"></p>
                         <p id="assuntoRecebido" style="margin: 0.25rem 0; font-size: 0.9rem;"></p>
                     </div>
-                    <a href="/" style="display: inline-block; margin-top: 2rem; background-color: #6B1B1B; color: white; padding: 0.75rem 2rem; text-decoration: none; border-radius: 6px; transition: background-color 0.3s ease;">
+                    <a href="/#inicio" style="display: inline-block; margin-top: 2rem; background-color: #6B1B1B; color: white; padding: 0.75rem 2rem; text-decoration: none; border-radius: 6px; transition: background-color 0.3s ease;">
                         ← Voltar para o site
                     </a>
                 </div>
@@ -329,12 +346,9 @@
         const inputAssunto = document.getElementById('assunto');
         const erroTelefone = document.getElementById('erroTelefone');
         const formulario = document.getElementById('formulario');
-        const grupoAssunto = inputAssunto.closest('.form-group');
-        const grupoDescricao = document.getElementById('descricao').closest('.form-group');
-
-        if (grupoAssunto && grupoDescricao) {
-            formulario.insertBefore(grupoAssunto, grupoDescricao);
-        }
+        const apiBaseUrl = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+            ? 'http://localhost:3000'
+            : 'https://api.santarosaadvogados.com.br';
 
         inputTelefone.addEventListener('input', function(e) {
             let apenasNumeros = this.value.replace(/\D/g, '');
@@ -435,7 +449,7 @@
 
             try {
                 // Enviar dados via POST em JSON
-                const response = await fetch('http://localhost:3000/cadastrar', {
+                const response = await fetch(`${apiBaseUrl}/cadastrar`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

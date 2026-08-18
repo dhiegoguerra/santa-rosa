@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,11 +14,25 @@ const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const ADMIN_SESSION_HOURS = Number(process.env.ADMIN_SESSION_HOURS || 3);
 const ADMIN_SESSION_TTL_MS = Math.max(1, ADMIN_SESSION_HOURS) * 60 * 60 * 1000;
+const SMTP_HOST = process.env.SMTP_HOST || '';
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_SECURE = ['1', 'true', 'yes', 'on'].includes(String(process.env.SMTP_SECURE || '').toLowerCase());
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASSWORD = process.env.SMTP_PASSWORD || '';
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || 'contato@starosajuridico.com.br';
+const LEAD_NOTIFICATION_TO = process.env.LEAD_NOTIFICATION_TO || 'contato@starosajuridico.com.br';
 const activeAdminTokens = new Map();
+let mailTransporter = null;
 
-// Libera o frontend local a consumir a API durante desenvolvimento.
+// Libera o frontend local e os dominios publicados a consumir a API.
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://santarosaadvogados.com.br',
+        'https://www.santarosaadvogados.com.br',
+        'https://api.santarosaadvogados.com.br'
+    ],
     credentials: true
 }));
 
@@ -73,6 +88,94 @@ function formatDateTime(value) {
         minute: '2-digit',
         second: '2-digit'
     }).format(date);
+}
+
+function hasLeadNotificationConfig() {
+    return Boolean(SMTP_HOST && SMTP_FROM && LEAD_NOTIFICATION_TO);
+}
+
+function getMailTransporter() {
+    if (!hasLeadNotificationConfig()) {
+        return null;
+    }
+
+    if (!mailTransporter) {
+        const transportConfig = {
+            host: SMTP_HOST,
+            port: SMTP_PORT,
+            secure: SMTP_SECURE
+        };
+
+        if (SMTP_USER || SMTP_PASSWORD) {
+            transportConfig.auth = {
+                user: SMTP_USER,
+                pass: SMTP_PASSWORD
+            };
+        }
+
+        mailTransporter = nodemailer.createTransport(transportConfig);
+    }
+
+    return mailTransporter;
+}
+
+function normalizeLeadText(value) {
+    return String(value ?? '')
+        .replace(/\r\n/g, '\n')
+        .trim();
+}
+
+function buildLeadNotificationText(lead) {
+    return [
+        'Lead novo.',
+        '',
+        `ID: ${lead.leadId}`,
+        `Data: ${formatDateTime(lead.createdAt)}`,
+        `Nome: ${lead.nome}`,
+        `E-mail: ${lead.email}`,
+        `Telefone: ${lead.telefone}`,
+        `Assunto: ${lead.assunto}`,
+        '',
+        'Descricao:',
+        normalizeLeadText(lead.descricao)
+    ].join('\n');
+}
+
+function buildLeadNotificationHtml(lead) {
+    const descriptionHtml = escapeHtml(normalizeLeadText(lead.descricao)).replace(/\n/g, '<br>');
+
+    return `
+        <div style="font-family: Arial, sans-serif; color: #2c241d; line-height: 1.6;">
+            <h2 style="margin: 0 0 16px; color: #8c3d2e;">Lead novo.</h2>
+            <p style="margin: 0 0 10px;"><strong>ID:</strong> ${escapeHtml(lead.leadId)}</p>
+            <p style="margin: 0 0 10px;"><strong>Data:</strong> ${escapeHtml(formatDateTime(lead.createdAt))}</p>
+            <p style="margin: 0 0 10px;"><strong>Nome:</strong> ${escapeHtml(lead.nome)}</p>
+            <p style="margin: 0 0 10px;"><strong>E-mail:</strong> ${escapeHtml(lead.email)}</p>
+            <p style="margin: 0 0 10px;"><strong>Telefone:</strong> ${escapeHtml(lead.telefone)}</p>
+            <p style="margin: 0 0 10px;"><strong>Assunto:</strong> ${escapeHtml(lead.assunto)}</p>
+            <p style="margin: 18px 0 8px;"><strong>Descricao:</strong></p>
+            <p style="margin: 0;">${descriptionHtml || '--'}</p>
+        </div>
+    `;
+}
+
+async function sendLeadNotificationEmail(lead) {
+    const transporter = getMailTransporter();
+
+    if (!transporter) {
+        console.warn('Notificacao de lead ignorada: SMTP nao configurado.');
+        return false;
+    }
+
+    await transporter.sendMail({
+        from: SMTP_FROM,
+        to: LEAD_NOTIFICATION_TO,
+        subject: 'Lead novo.',
+        text: buildLeadNotificationText(lead),
+        html: buildLeadNotificationHtml(lead)
+    });
+
+    return true;
 }
 
 // Cria um token temporario em memoria para liberar o acesso ao painel administrativo.
@@ -313,8 +416,46 @@ function renderLeadsPanel() {
                     justify-content: space-between;
                     margin: 18px 0;
                 }
+                .toolbar-main {
+                    display: flex;
+                    flex: 1;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    align-items: center;
+                }
                 .search {
                     width: min(420px, 100%);
+                    padding: 12px 14px;
+                    border-radius: 14px;
+                    border: 1px solid var(--line);
+                    background: #fff;
+                    color: var(--text);
+                    font-size: 16px;
+                }
+                .search:focus,
+                .date-input:focus {
+                    outline: none;
+                    border-color: var(--brand);
+                    box-shadow: 0 0 0 4px rgba(140, 61, 46, 0.12);
+                }
+                .filters {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    align-items: flex-end;
+                }
+                .date-field {
+                    display: grid;
+                    gap: 6px;
+                    min-width: 140px;
+                }
+                .date-field span {
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--muted);
+                }
+                .date-input {
+                    width: 100%;
                     padding: 12px 14px;
                     border-radius: 14px;
                     border: 1px solid var(--line);
@@ -557,9 +698,60 @@ function renderLeadsPanel() {
                     }).format(date);
                 }
 
-                // Monta os cards, a busca e a tabela com os leads recebidos da API.
-                function renderTable(leads) {
-                    const rowsHtml = leads.map((row) => \`
+                // Extrai a data de Sao Paulo em YYYY-MM-DD para comparar com os filtros.
+                function getFilterDateKey(value) {
+                    if (!value) {
+                        return '';
+                    }
+
+                    const date = new Date(value);
+
+                    if (Number.isNaN(date.getTime())) {
+                        return '';
+                    }
+
+                    const parts = new Intl.DateTimeFormat('en-GB', {
+                        timeZone: 'America/Sao_Paulo',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    }).formatToParts(date);
+
+                    const day = parts.find((part) => part.type === 'day')?.value;
+                    const month = parts.find((part) => part.type === 'month')?.value;
+                    const year = parts.find((part) => part.type === 'year')?.value;
+
+                    if (!day || !month || !year) {
+                        return '';
+                    }
+
+                    return \`\${year}-\${month}-\${day}\`;
+                }
+
+                function createLeadViewModel(row) {
+                    const formattedDate = formatDateTime(row.dt_cadastro);
+                    const filterDateKey = getFilterDateKey(row.dt_cadastro);
+                    const searchableText = [
+                        row.id,
+                        row.nome,
+                        row.tx_email,
+                        row.telefone,
+                        row.tx_assunto,
+                        row.descricao,
+                        formattedDate,
+                        filterDateKey
+                    ].join(' ').toLowerCase();
+
+                    return {
+                        ...row,
+                        formattedDate,
+                        filterDateKey,
+                        searchableText
+                    };
+                }
+
+                function buildRowsHtml(leads) {
+                    return leads.map((row) => \`
                         <tr>
                             <td>\${escapeHtml(row.id)}</td>
                             <td class="col-nome">\${escapeHtml(row.nome)}</td>
@@ -567,9 +759,14 @@ function renderLeadsPanel() {
                             <td class="col-telefone">\${escapeHtml(row.telefone)}</td>
                             <td class="col-assunto">\${escapeHtml(row.tx_assunto)}</td>
                             <td class="descricao">\${escapeHtml(row.descricao)}</td>
-                            <td>\${escapeHtml(formatDateTime(row.dt_cadastro))}</td>
+                            <td>\${escapeHtml(row.formattedDate)}</td>
                         </tr>
                     \`).join('');
+                }
+
+                // Monta os cards, a busca e a tabela com os leads recebidos da API.
+                function renderTable(leads) {
+                    const viewLeads = leads.map(createLeadViewModel);
 
                     document.getElementById('app').innerHTML = \`
                         <div class="wrap">
@@ -578,23 +775,79 @@ function renderLeadsPanel() {
                                 <p>Acesse os cadastros recebidos pelo site sem abrir o banco de dados.</p>
                                 <div class="stats">
                                     <div class="card">
-                                        <strong>\${leads.length}</strong>
+                                        <strong id="totalLeadsValue">\${viewLeads.length}</strong>
                                         <span>Total de leads</span>
                                     </div>
                                     <div class="card">
-                                        <strong>\${leads[0] ? escapeHtml(formatDateTime(leads[0].dt_cadastro)) : '--'}</strong>
+                                        <strong id="visibleLeadsValue">\${viewLeads.length}</strong>
+                                        <span>Leads exibidos</span>
+                                    </div>
+                                    <div class="card">
+                                        <strong id="lastLeadValue">\${viewLeads[0] ? escapeHtml(viewLeads[0].formattedDate) : '--'}</strong>
                                         <span>Ultimo cadastro</span>
                                     </div>
                                 </div>
                             </section>
 
                             <div class="toolbar">
-                                <input id="searchInput" class="search" type="search" placeholder="Buscar por nome, e-mail, telefone, assunto ou descricao">
+                                <div class="toolbar-main">
+                                    <input id="searchInput" class="search" type="search" placeholder="Buscar por nome, e-mail, telefone, assunto ou descricao">
+                                    <div class="filters">
+                                        <label class="date-field">
+                                            <span>Data inicial</span>
+                                            <input id="startDateInput" class="date-input" type="date">
+                                        </label>
+                                        <label class="date-field">
+                                            <span>Data final</span>
+                                            <input id="endDateInput" class="date-input" type="date">
+                                        </label>
+                                        <button id="clearFiltersButton" class="button button-secondary" type="button">Limpar filtros</button>
+                                    </div>
+                                </div>
                                 <button id="logoutButton" class="button button-secondary" type="button">Sair</button>
                             </div>
 
-                            <section class="table-shell">
-                                \${leads.length > 0 ? \`
+                            <section id="resultsShell" class="table-shell"></section>
+                            <p id="resultsSummary" class="footer-note"></p>
+                            <p class="footer-note">A sessao do painel dura somente enquanto esta aba estiver aberta.</p>
+                        </div>
+                    \`;
+
+                    const input = document.getElementById('searchInput');
+                    const startDateInput = document.getElementById('startDateInput');
+                    const endDateInput = document.getElementById('endDateInput');
+                    const clearFiltersButton = document.getElementById('clearFiltersButton');
+                    const logoutButton = document.getElementById('logoutButton');
+                    const resultsShell = document.getElementById('resultsShell');
+                    const totalLeadsValue = document.getElementById('totalLeadsValue');
+                    const visibleLeadsValue = document.getElementById('visibleLeadsValue');
+                    const lastLeadValue = document.getElementById('lastLeadValue');
+                    const resultsSummary = document.getElementById('resultsSummary');
+
+                    function renderResults(filteredLeads, hasActiveFilters) {
+                        if (totalLeadsValue) {
+                            totalLeadsValue.textContent = String(viewLeads.length);
+                        }
+
+                        if (visibleLeadsValue) {
+                            visibleLeadsValue.textContent = String(filteredLeads.length);
+                        }
+
+                        if (lastLeadValue) {
+                            lastLeadValue.textContent = filteredLeads[0]?.formattedDate || '--';
+                        }
+
+                        if (resultsShell) {
+                            if (!filteredLeads.length) {
+                                resultsShell.innerHTML = \`
+                                    <div class="empty">
+                                        \${viewLeads.length
+                                            ? 'Nenhum lead encontrado para os filtros informados.'
+                                            : 'Nenhum lead cadastrado ainda.'}
+                                    </div>
+                                \`;
+                            } else {
+                                resultsShell.innerHTML = \`
                                     <table id="leadsTable">
                                         <thead>
                                             <tr>
@@ -607,33 +860,88 @@ function renderLeadsPanel() {
                                                 <th>Criado em</th>
                                             </tr>
                                         </thead>
-                                        <tbody>\${rowsHtml}</tbody>
+                                        <tbody>\${buildRowsHtml(filteredLeads)}</tbody>
                                     </table>
-                                \` : '<div class="empty">Nenhum lead cadastrado ainda.</div>'}
-                            </section>
+                                \`;
+                            }
+                        }
 
-                            <p class="footer-note">A sessao do painel dura somente enquanto esta aba estiver aberta.</p>
-                        </div>
-                    \`;
+                        if (resultsSummary) {
+                            resultsSummary.textContent = hasActiveFilters
+                                ? \`Mostrando \${filteredLeads.length} de \${viewLeads.length} lead(s) com os filtros aplicados.\`
+                                : \`Mostrando \${viewLeads.length} lead(s).\`;
+                        }
+                    }
 
-                    const input = document.getElementById('searchInput');
-                    const rows = Array.from(document.querySelectorAll('#leadsTable tbody tr'));
-                    const logoutButton = document.getElementById('logoutButton');
+                    function applyFilters() {
+                        const term = input ? input.value.toLowerCase().trim() : '';
+                        const startDate = startDateInput ? startDateInput.value : '';
+                        const endDate = endDateInput ? endDateInput.value : '';
+                        const hasActiveFilters = Boolean(term || startDate || endDate);
 
-                    if (input && rows.length) {
-                        input.addEventListener('input', () => {
-                            const term = input.value.toLowerCase().trim();
+                        if (resultsShell && startDate && endDate && startDate > endDate) {
+                            if (visibleLeadsValue) {
+                                visibleLeadsValue.textContent = '0';
+                            }
 
-                            rows.forEach((row) => {
-                                const content = row.innerText.toLowerCase();
-                                row.style.display = !term || content.includes(term) ? '' : 'none';
-                            });
+                            if (lastLeadValue) {
+                                lastLeadValue.textContent = '--';
+                            }
+
+                            resultsShell.innerHTML = '<div class="empty">A data inicial nao pode ser maior que a data final.</div>';
+
+                            if (resultsSummary) {
+                                resultsSummary.textContent = 'Ajuste o periodo para continuar a busca.';
+                            }
+
+                            return;
+                        }
+
+                        const filteredLeads = viewLeads.filter((lead) => {
+                            const matchesText = !term || lead.searchableText.includes(term);
+                            const matchesStartDate = !startDate || (lead.filterDateKey && lead.filterDateKey >= startDate);
+                            const matchesEndDate = !endDate || (lead.filterDateKey && lead.filterDateKey <= endDate);
+                            return matchesText && matchesStartDate && matchesEndDate;
+                        });
+
+                        renderResults(filteredLeads, hasActiveFilters);
+                    }
+
+                    if (input) {
+                        input.addEventListener('input', applyFilters);
+                    }
+
+                    if (startDateInput) {
+                        startDateInput.addEventListener('input', applyFilters);
+                    }
+
+                    if (endDateInput) {
+                        endDateInput.addEventListener('input', applyFilters);
+                    }
+
+                    if (clearFiltersButton) {
+                        clearFiltersButton.addEventListener('click', () => {
+                            if (input) {
+                                input.value = '';
+                            }
+
+                            if (startDateInput) {
+                                startDateInput.value = '';
+                            }
+
+                            if (endDateInput) {
+                                endDateInput.value = '';
+                            }
+
+                            applyFilters();
                         });
                     }
 
                     if (logoutButton) {
                         logoutButton.addEventListener('click', logout);
                     }
+
+                    renderResults(viewLeads, false);
                 }
 
                 // Envia usuario e senha para o backend e salva o token se o login for aceito.
@@ -766,13 +1074,37 @@ app.post('/cadastrar', async (req, res) => {
 
         const sql = 'INSERT INTO leads (nome, tx_email, telefone, tx_assunto, descricao, dt_cadastro) VALUES (?, ?, ?, ?, ?, NOW())';
         const connection = await pool.getConnection();
-        const [result] = await connection.query(sql, [nome, email, telefone, assunto, descricao]);
-        connection.release();
+        let result;
+
+        try {
+            [result] = await connection.query(sql, [nome, email, telefone, assunto, descricao]);
+        } finally {
+            connection.release();
+        }
+
+        const leadNotification = {
+            leadId: result.insertId,
+            nome,
+            email,
+            telefone,
+            assunto,
+            descricao,
+            createdAt: new Date()
+        };
+
+        let emailNotificado = false;
+
+        try {
+            emailNotificado = await sendLeadNotificationEmail(leadNotification);
+        } catch (mailError) {
+            console.error('Erro ao enviar notificacao de lead:', mailError?.message || mailError);
+        }
 
         res.status(200).json({
             sucesso: true,
             mensagem: 'Cadastro realizado com sucesso!',
-            leadId: result.insertId
+            leadId: result.insertId,
+            emailNotificado
         });
     } catch (err) {
         res.status(500).json({
