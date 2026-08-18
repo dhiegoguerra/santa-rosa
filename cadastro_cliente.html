@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>Consulta Gratuita - Santa Rosa Advocacia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #FAF8F5;
+            color: #2C2416;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background-color: #FAF8F5;
+            border-bottom: 1px solid rgba(107, 27, 27, 0.1);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo img {
+            display: block;
+            height: 88px;
+            width: auto;
+        }
+
+        .logo:focus-visible {
+            outline: 2px solid #6B1B1B;
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #2C2416;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #6B1B1B;
+        }
+
+        /* Main */
+        main {
+            min-height: calc(100vh - 120px);
+            display: flex;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Hero Text */
+        .hero-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero-section h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            color: #1A1410;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .hero-section p {
+            font-size: 1.125rem;
+            color: #594A3A;
+            margin-bottom: 2rem;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(107, 27, 27, 0.1);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2C2416;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid rgba(107, 27, 27, 0.2);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background-color: #FFF;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #6B1B1B;
+            box-shadow: 0 0 0 3px rgba(107, 27, 27, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-hint {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .form-examples {
+            background: rgba(107, 27, 27, 0.05);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #594A3A;
+        }
+
+        .form-examples strong {
+            color: #2C2416;
+        }
+
+        /* Error message */
+        .error {
+            color: #c85c5c;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        /* Button */
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background-color: #6B1B1B;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-submit:hover {
+            background-color: #541515;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        /* Footer note */
+        .footer-note {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(107, 27, 27, 0.1);
+            text-align: center;
+            color: #594A3A;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .logo img {
+                height: 72px;
+            }
+
+            .form-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .hero-section h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <a class="logo" href="/#inicio" aria-label="Voltar ao inicio do site">
+                <img src="/favicon.png" alt="Santa Rosa Advocacia">
+            </a>
+            <nav class="nav-links">
+                <a href="/#inicio" style="font-size: 0.9rem;">← Voltar</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main>
+        <div class="container">
+            <div class="hero-section">
+                <h1>Consulta Gratuita</h1>
+                <p>Descreva seu problema trabalhista e em breve nos colocaremos em contato para uma análise preliminar.</p>
+            </div>
+
+            <div class="form-container">
+                <form id="formulario">
+                    <!-- Nome -->
+                    <div class="form-group">
+                        <label for="nome">Nome Completo *</label>
+                        <input type="text" id="nome" name="nome" placeholder="Seu nome" required>
+                        <span class="error" id="erroNome"></span>
+                    </div>
+
+                    <!-- E-mail -->
+                    <div class="form-group">
+                        <label for="email">E-mail *</label>
+                        <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+                        <span class="error" id="erroEmail"></span>
+                    </div>
+
+                    <!-- Telefone -->
+                    <div class="form-group">
+                        <label for="telefone">WhatsApp *</label>
+                        <input type="tel" id="telefone" name="telefone" placeholder="(XX) XXXXX-XXXX" maxlength="15" required>
+                        <span class="form-hint">Com WhatsApp facilitamos o contato mais rápido</span>
+                        <span class="error" id="erroTelefone"></span>
+                    </div>
+
+                    <!-- Assunto -->
+                    <div class="form-group">
+                        <label for="assunto">Assunto *</label>
+                        <select id="assunto" name="assunto" required>
+                            <option value="">Selecione o tipo de caso</option>
+                            <option value="Rescisão Contratual">Rescisão Contratual</option>
+                            <option value="Horas Extras">Horas Extras</option>
+                            <option value="Acidente de Trabalho">Acidente de Trabalho</option>
+                            <option value="Assédio">Assédio</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                        <span class="error" id="erroAssunto"></span>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="form-group">
+                        <label for="descricao">Descreva seu Problema *</label>
+                        <textarea id="descricao" name="descricao" placeholder="Ex: Trabalho há 3 anos na empresa e fui demitido sem aviso prévio..." required></textarea>
+                        <div class="form-examples">
+                            <strong>Exemplos:</strong> Demissão sem justa causa • Horas extras não pagas • Assédio moral • Falta de equipamento de proteção
+                        </div>
+                        <span class="error" id="erroDescricao"></span>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="btnSubmit">Enviar Consulta</button>
+                </form>
+
+                <!-- Mensagem de Sucesso -->
+                <div id="mensagemSucesso" style="display: none; text-align: center;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">✓</div>
+                        <h2 style="font-family: 'Crimson Pro', serif; font-size: 1.75rem; color: #6B1B1B; margin-bottom: 0.5rem;">Cadastro Concluído!</h2>
+                        <p style="font-size: 1.125rem; color: #594A3A; margin-bottom: 1.5rem;">
+                            Obrigado por entrar em contato. Nossa equipe analisará seu caso e em breve você receberá um retorno via WhatsApp.
+                        </p>
+                    </div>
+                    <div style="background: rgba(107, 27, 27, 0.05); padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+                        <p style="font-size: 0.95rem; color: #594A3A; margin-bottom: 0.5rem;"><strong>Dados Recebidos:</strong></p>
+                        <p id="nomeRecebido" style="margin: 0.25rem 0; font-size: 0.9rem;"></p>
+                        <p id="emailRecebido" style="margin: 0.25rem 0; font-size: 0.9rem;"></p>
+                        <p id="telefoneRecebido" style="margin: 0.25rem 0; font-size: 0.9rem;"></p>
+                        <p id="assuntoRecebido" style="margin: 0.25rem 0; font-size: 0.9rem;"></p>
+                    </div>
+                    <a href="/#inicio" style="display: inline-block; margin-top: 2rem; background-color: #6B1B1B; color: white; padding: 0.75rem 2rem; text-decoration: none; border-radius: 6px; transition: background-color 0.3s ease;">
+                        ← Voltar para o site
+                    </a>
+                </div>
+
+                <div class="footer-note">
+                    <p>Seus dados estão protegidos. Respeitamos sua privacidade.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Formatar e validar telefone
+        const inputTelefone = document.getElementById('telefone');
+        const inputAssunto = document.getElementById('assunto');
+        const erroTelefone = document.getElementById('erroTelefone');
+        const formulario = document.getElementById('formulario');
+        const apiBaseUrl = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+            ? 'http://localhost:3000'
+            : 'https://api.santarosaadvogados.com.br';
+
+        inputTelefone.addEventListener('input', function(e) {
+            let apenasNumeros = this.value.replace(/\D/g, '');
+            apenasNumeros = apenasNumeros.slice(0, 11);
+
+            let telefoneFormatado = '';
+
+            if (apenasNumeros.length > 0) {
+                telefoneFormatado = '(' + apenasNumeros.substring(0, 2);
+                
+                if (apenasNumeros.length > 2) {
+                    telefoneFormatado += ') ' + apenasNumeros.substring(2, 7);
+                }
+                
+                if (apenasNumeros.length > 7) {
+                    telefoneFormatado += '-' + apenasNumeros.substring(7, 11);
+                }
+            }
+
+            this.value = telefoneFormatado;
+
+            if (apenasNumeros.length < 10) {
+                erroTelefone.classList.add('show');
+                erroTelefone.textContent = 'Telefone inválido (mínimo 10 dígitos)';
+            } else {
+                erroTelefone.classList.remove('show');
+            }
+        });
+
+        inputAssunto.addEventListener('change', function() {
+            const erroAssunto = document.getElementById('erroAssunto');
+
+            if (this.value) {
+                erroAssunto.classList.remove('show');
+                erroAssunto.textContent = '';
+            }
+        });
+
+        // Enviar formulário via AJAX
+        formulario.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const nome = document.getElementById('nome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefone = inputTelefone.value.replace(/\D/g, '');
+            const assunto = inputAssunto.value.trim();
+            const descricao = document.getElementById('descricao').value.trim();
+            const erroEmail = document.getElementById('erroEmail');
+            const erroAssunto = document.getElementById('erroAssunto');
+            const erroDescricao = document.getElementById('erroDescricao');
+            
+            let temErro = false;
+
+            erroEmail.classList.remove('show');
+            erroEmail.textContent = '';
+            erroTelefone.classList.remove('show');
+            erroTelefone.textContent = '';
+            erroAssunto.classList.remove('show');
+            erroAssunto.textContent = '';
+            erroDescricao.classList.remove('show');
+            erroDescricao.textContent = '';
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                erroEmail.classList.add('show');
+                erroEmail.textContent = 'Informe um email valido';
+                temErro = true;
+            }
+
+            // Validar telefone
+            if (telefone.length < 10 || telefone.length > 11) {
+                erroTelefone.classList.add('show');
+                erroTelefone.textContent = 'Telefone deve ter 10 ou 11 dígitos!';
+                temErro = true;
+            }
+
+            // Validar descrição
+            if (descricao.length < 10) {
+                erroDescricao.classList.add('show');
+                erroDescricao.textContent = 'Descreva seu problema com mais detalhes';
+                temErro = true;
+            }
+
+            if (!assunto) {
+                erroAssunto.classList.add('show');
+                erroAssunto.textContent = 'Selecione o tipo de caso';
+                temErro = true;
+            }
+
+            if (temErro) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Desabilitar botão
+            const btnSubmit = document.getElementById('btnSubmit');
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Enviando...';
+
+            try {
+                // Enviar dados via POST em JSON
+                const response = await fetch(`${apiBaseUrl}/cadastrar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nome,
+                        email,
+                        telefone: inputTelefone.value,
+                        assunto,
+                        descricao
+                    })
+                });
+
+                const text = await response.text();
+                let payload = null;
+
+                try {
+                    payload = text ? JSON.parse(text) : null;
+                } catch (_) {
+                    payload = text;
+                }
+
+                console.log('Resposta do servidor:', payload ?? text);
+
+                if (response.ok) {
+                    // Mostrar mensagem de sucesso
+                    document.querySelector('.form-container form').style.display = 'none';
+                    document.getElementById('mensagemSucesso').style.display = 'block';
+                    
+                    // Preencher dados recebidos
+                    document.getElementById('nomeRecebido').textContent = `Nome: ${nome}`;
+                    document.getElementById('emailRecebido').textContent = `E-mail: ${email}`;
+                    document.getElementById('telefoneRecebido').textContent = `WhatsApp: ${inputTelefone.value}`;
+                    document.getElementById('assuntoRecebido').textContent = `Assunto: ${assunto}`;
+
+                    // Scroll para mensagem
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const mensagemErro = payload && typeof payload === 'object'
+                        ? (payload.erro || payload.mensagem || 'Erro ao cadastrar. Tente novamente.')
+                        : (text || 'Erro ao cadastrar. Tente novamente.');
+
+                    alert(mensagemErro);
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Enviar Consulta';
+                }
+            } catch (erro) {
+                console.error('Erro:', erro);
+                alert('Erro ao conectar com o servidor. Certifique-se que o backend está rodando.');
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Enviar Consulta';
+            }
+        });
+    </script>
+</body>
+</html>

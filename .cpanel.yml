@@ -1,0 +1,19 @@
+---
+deployment:
+  tasks:
+    - export REPOPATH=/home2/starosajuridico/repositories/santa-rosa
+    - export PUBLICPATH=/home2/starosajuridico/public_html
+    - export APPPATH=/home2/starosajuridico/starosajuridico_app
+    - /bin/mkdir -p "$PUBLICPATH"
+    - /bin/mkdir -p "$PUBLICPATH/assets"
+    - /bin/mkdir -p "$APPPATH"
+    - cd "$REPOPATH" && npm ci
+    - cd "$REPOPATH" && npm run build
+    - /bin/cp "$REPOPATH/dist/index.html" "$PUBLICPATH/index.html"
+    - /bin/cp "$REPOPATH/dist/favicon.png" "$PUBLICPATH/favicon.png"
+    - /bin/cp -R "$REPOPATH/dist/assets/." "$PUBLICPATH/assets/"
+    - /bin/cp "$REPOPATH/cadastro_cliente.html" "$PUBLICPATH/cadastro_cliente.html"
+    - /bin/cp "$REPOPATH/server.cjs" "$APPPATH/server.cjs"
+    - /bin/cp "$REPOPATH/package.json" "$APPPATH/package.json"
+    - /bin/cp "$REPOPATH/package-lock.json" "$APPPATH/package-lock.json"
+    - cd "$APPPATH" && npm ci --omit=dev
