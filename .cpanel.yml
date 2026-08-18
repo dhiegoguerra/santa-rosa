@@ -1,9 +1,9 @@
 ---
 deployment:
   tasks:
-    - export REPOPATH=/home2/starosajuridico/repositories/santa-rosa
-    - export PUBLICPATH=/home2/starosajuridico/public_html
-    - export APPPATH=/home2/starosajuridico/starosajuridico_app
+    - export REPOPATH="$(pwd)"
+    - export PUBLICPATH="$HOME/public_html"
+    - export APPPATH="$HOME/starosajuridico_app"
     - /bin/mkdir -p "$PUBLICPATH"
     - /bin/mkdir -p "$PUBLICPATH/assets"
     - /bin/mkdir -p "$APPPATH"
